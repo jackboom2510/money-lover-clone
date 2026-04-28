@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -41,6 +41,9 @@ model Transaction {
 
   category     String
   categoryIcon String
+
+  budgetId   String? // Tham chiếu đến Budget
+  budget     Budget? @relation(fields: [budgetId], references: [id])
 }
 
 model MonthHistory {
@@ -63,3 +66,40 @@ model YearHistory {
 
   @@id([month, year, userId])
 }
+
+model Goal {
+  id           String   @id @default(uuid())
+  userId       String
+  name         String
+  targetAmount Float
+  contributed  Float    @default(0)
+  description  String?
+  targetDate   DateTime
+  createdAt    DateTime @default(now())
+}
+
+model Loan {
+  id           String   @id @default(uuid())
+  userId       String
+  name         String
+  totalAmount  Float
+  paidAmount   Float    @default(0)
+  description  String?
+  dueDate      DateTime
+  overdue      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model Budget {
+  id          String   @id @default(uuid())
+  userId      String
+  name        String
+  amount      Float
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime @default(now())
+
+  transactions Transaction[]
+}
+

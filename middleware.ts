@@ -1,18 +1,14 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 
-const isProtectedRoute = createRouteMatcher(['/dashboard(.*)'])
-
+// 1. Định nghĩa các matcher bên ngoài để tối ưu hiệu năng
+// middleware.ts
 export default clerkMiddleware((auth, req) => {
-  if (isProtectedRoute(req)) {
-    const url = new URL(req.nextUrl.origin)
+  const isDashboardRoute = createRouteMatcher(['/dashboard(.*)'])
 
+  // Nếu là TRANG dashboard thì mới ép redirect
+  if (isDashboardRoute(req) && !req.nextUrl.pathname.startsWith('/api')) {
     auth().protect({
-      unauthenticatedUrl: `${url.origin}/signin`,
-      unauthorizedUrl: `${url.origin}/dashboard/stores`,
+      unauthenticatedUrl: new URL('/signin', req.url).toString(),
     })
   }
 })
-
-export const config = {
-  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
-}

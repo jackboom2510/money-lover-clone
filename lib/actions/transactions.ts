@@ -122,7 +122,7 @@ export type GetTransactionHistoryResponseType = Awaited<ReturnType<typeof getTra
 export async function getTransactionsHistory(from: Date, to: Date) {
   const user = await currentUser()
   if (!user) {
-    redirect('/sign-in')
+   throw new Error("Unauthorized");
   }
 
   const userSettings = await db.userSettings.findUnique({
@@ -159,7 +159,7 @@ export async function getTransactionsHistory(from: Date, to: Date) {
 export async function DeleteTransaction(id: string) {
   const user = await currentUser()
   if (!user) {
-    redirect('/sign-in')
+    redirect('/signin')
   }
 
   const transaction = await db.transaction.findUnique({

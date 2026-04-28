@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { DateRangePicker } from '@/components/ui/date-range-picker'
 import { MAX_DATE_RANGE_DAYS } from '@/lib/constants'
@@ -6,18 +6,23 @@ import { differenceInDays, startOfMonth } from 'date-fns'
 import React, { useState } from 'react'
 import { toast } from 'sonner'
 import TransactionTable from './_components/TransactionTable'
+import { Shell } from '@/components/app-ui/shell'
 
-function TransactionsPage() {
+export default function TransactionsPage() {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: new Date(),
   })
+
   return (
-    <>
+    <Shell>
       <div className='border-b bg-card'>
         <div className='container flex flex-wrap items-center justify-between gap-6 py-8'>
           <div>
             <p className='text-3xl font-bold'>Transactions history</p>
+            <p className='text-muted-foreground text-sm'>
+              Manage and export your transaction history
+            </p>
           </div>
           <DateRangePicker
             initialDateFrom={dateRange.from}
@@ -38,11 +43,9 @@ function TransactionsPage() {
           />
         </div>
       </div>
-      <div className='container'>
+      <div className='container py-6'>
         <TransactionTable from={dateRange.from} to={dateRange.to} />
       </div>
-    </>
+    </Shell>
   )
 }
-
-export default TransactionsPage
