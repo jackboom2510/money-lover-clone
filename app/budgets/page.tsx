@@ -7,7 +7,6 @@ export default async function BudgetsPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Budgets</h1>
-      {/* @ts-expect-error Async Server Component import Client Component */}
       <BudgetList userId={user.id} />
     </div>
   )

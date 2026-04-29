@@ -18,42 +18,24 @@ export const siteConfig = {
   links,
   mainNav: [
     {
-      title: 'Lobby',
-      items: [
-        {
-          title: 'Products',
-          href: '/products',
-          description: 'All the products we have to offer.',
-          items: [],
-        },
-        {
-          title: 'Build a Board',
-          href: '/build-a-board',
-          description: 'Build your own custom skateboard.',
-          items: [],
-        },
-        {
-          title: 'Blog',
-          href: '/blog',
-          description: 'Read our latest blog posts.',
-          items: [],
-        },
-      ],
-    },
-    {
       title: 'Dashboard',
       href: '/dashboard',
-      description: 'Manage your account and orders.',
+      description: 'View your financial overview.',
     },
     {
       title: 'Transactions',
       href: '/transactions',
-      description: 'Manage your account and orders.',
+      description: 'Add new transactions.',
+    },
+    {
+      title: 'History',
+      href: '/history',
+      description: 'View transaction history.',
     },
     {
       title: 'Manage',
       href: '/manage',
-      description: 'Manage your account and orders.',
+      description: 'Manage your account settings.',
     },
     // ...productConfig.categories.map((category) => ({
     //   title: category.name,

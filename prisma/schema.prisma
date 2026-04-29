@@ -44,6 +44,12 @@ model Transaction {
 
   budgetId   String? // Tham chiếu đến Budget
   budget     Budget? @relation(fields: [budgetId], references: [id])
+  
+  goalId     String? // Tham chiếu đến Goal
+  goal       Goal? @relation(fields: [goalId], references: [id])
+  
+  loanId     String? // Tham chiếu đến Loan
+  loan       Loan? @relation(fields: [loanId], references: [id])
 }
 
 model MonthHistory {
@@ -76,6 +82,11 @@ model Goal {
   description  String?
   targetDate   DateTime
   createdAt    DateTime @default(now())
+  isCompleted  Boolean  @default(false)
+  priority     String   @default("medium") // low, medium, high
+  category     String?
+  
+  transactions Transaction[]
 }
 
 model Loan {
@@ -88,6 +99,27 @@ model Loan {
   dueDate      DateTime
   overdue      Boolean  @default(false)
   createdAt    DateTime @default(now())
+  interestRate Float?   // Annual interest rate
+  loanType     String   @default("personal") // personal, mortgage, car, etc.
+  status       String   @default("active") // active, paid, defaulted
+  
+  repaymentSchedules RepaymentSchedule[]
+  transactions Transaction[]
+}
+
+model RepaymentSchedule {
+  id         String   @id @default(uuid())
+  loanId     String
+  dueDate    DateTime
+  amount     Float
+  paidAmount Float    @default(0)
+  status     String   @default("pending") // pending, paid, overdue
+  createdAt  DateTime @default(now())
+  paidAt     DateTime?
+  
+  loan Loan @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  
+  @@unique([loanId, dueDate])
 }
 
 model Budget {
@@ -95,11 +127,34 @@ model Budget {
   userId      String
   name        String
   amount      Float
+  spent       Float    @default(0)
   description String?
   startDate   DateTime
   endDate     DateTime
   createdAt   DateTime @default(now())
+  category    String?
+  isActive    Boolean  @default(true)
+  alertThreshold Float? // Alert when spent reaches this percentage
 
   transactions Transaction[]
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // info, warning, error, success
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  readAt    DateTime?
+  
+  // Optional references to related entities
+  goalId    String?
+  loanId    String?
+  budgetId  String?
+  
+  @@index([userId, isRead])
+  @@index([createdAt])
 }
 

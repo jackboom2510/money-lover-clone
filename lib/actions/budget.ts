@@ -21,6 +21,9 @@ export async function createBudget(data: any) {
     ...parsed.data,
     startDate: new Date(parsed.data.startDate),
     endDate: new Date(parsed.data.endDate),
+    userId: data.userId, // Ensure userId is included
+    name: parsed.data.name || 'Untitled Budget', // Ensure name is provided
+    amount: parsed.data.amount || 0, // Ensure amount is provided
   }
   return db.budget.create({ data: budgetData })
 }

@@ -27,7 +27,7 @@ export async function getReportByCategory(userId: string) {
 
 export async function getReportByMonth(userId: string) {
   return db.transaction.groupBy({
-    by: ['month'],
+    by: ['createdAt'],
     where: { userId },
     _sum: { amount: true },
   })

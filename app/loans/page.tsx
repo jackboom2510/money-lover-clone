@@ -7,7 +7,6 @@ export default async function LoansPage() {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-3xl font-bold mb-6">Loans</h1>
-      {/* @ts-expect-error Async Server Component import Client Component */}
       <LoanList userId={user.id} />
     </div>
   )

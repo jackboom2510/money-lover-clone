@@ -20,6 +20,9 @@ export async function createGoal(data: any) {
   const goalData = {
     ...parsed.data,
     targetDate: new Date(parsed.data.targetDate),
+    userId: data.userId, // Ensure userId is included
+    name: parsed.data.name || 'Untitled Goal', // Ensure name is provided
+    targetAmount: parsed.data.targetAmount || 0, // Ensure targetAmount is provided
   }
   return db.goal.create({ data: goalData })
 }

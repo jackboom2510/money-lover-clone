@@ -64,8 +64,7 @@ export function MainNav({ items }: MainNavProps) {
             </NavigationMenuItem>
           ) : null} */}
           {items
-            ?.filter((item) => item.title !== items[0]?.title)
-            .map((item) =>
+            ?.map((item) =>
               item?.items ? (
                 <NavigationMenuItem key={item.title}>
                   <NavigationMenuTrigger className='h-auto capitalize'>

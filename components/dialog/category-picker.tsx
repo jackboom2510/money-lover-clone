@@ -39,9 +39,9 @@ function CategoryPicker({ type, onChange, userId }: Props) {
     queryFn: () => fetch(`/api/categories?type=${type}`).then((res) => res.json()),
   })
 
-  const selectedCategory = categoriesQuery.data?.find(
-    (category: Category) => category.name === value
-  )
+  const selectedCategory = Array.isArray(categoriesQuery.data) 
+    ? categoriesQuery.data.find((category: Category) => category.name === value)
+    : undefined
 
   const successCallback = useCallback(
     (category: Category) => {

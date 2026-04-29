@@ -19,6 +19,9 @@ export async function createLoan(data: any) {
   const loanData = {
     ...parsed.data,
     dueDate: new Date(parsed.data.dueDate),
+    userId: data.userId, // Ensure userId is included
+    name: parsed.data.name || 'Untitled Loan', // Ensure name is provided
+    totalAmount: parsed.data.totalAmount || 0, // Ensure totalAmount is provided
   }
   return db.loan.create({ data: loanData })
 }

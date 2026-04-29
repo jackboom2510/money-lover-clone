@@ -36,6 +36,7 @@ import { TransactionType } from '@/types'
 import { CreateTransactionSchema, CreateTransactionSchemaType } from '@/lib/schemas/transactions'
 import CategoryPicker from './category-picker'
 import { createTransaction } from '@/lib/actions/transactions'
+import { BudgetSelect, GoalSelect, LoanSelect } from '@/components/ui/entity-select'
 
 interface Props {
   trigger: ReactNode
@@ -192,6 +193,67 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Entity Linking Fields */}
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="text-sm font-medium text-muted-foreground">Link to Financial Entities (Optional)</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name='budgetId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Budget</FormLabel>
+                      <FormControl>
+                        <BudgetSelect 
+                          value={field.value || ''} 
+                          onValueChange={field.onChange}
+                          placeholder="Select a budget..."
+                        />
+                      </FormControl>
+                      <FormDescription>Link this transaction to a budget (optional)</FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='goalId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Goal</FormLabel>
+                      <FormControl>
+                        <GoalSelect 
+                          value={field.value || ''} 
+                          onValueChange={field.onChange}
+                          placeholder="Select a goal..."
+                        />
+                      </FormControl>
+                      <FormDescription>Link this transaction to a goal (optional)</FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name='loanId'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Link to Loan</FormLabel>
+                      <FormControl>
+                        <LoanSelect 
+                          value={field.value || ''} 
+                          onValueChange={field.onChange}
+                          placeholder="Select a loan..."
+                        />
+                      </FormControl>
+                      <FormDescription>Link this transaction to a loan (optional)</FormDescription>
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
           </form>
         </Form>

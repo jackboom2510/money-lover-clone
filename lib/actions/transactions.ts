@@ -12,16 +12,32 @@ export async function createTransaction(userId: string, form: CreateTransactionS
     throw new Error(parsedBody.error.message)
   }
 
-  const { amount, category, date, description, type } = parsedBody.data
-  const categoryRow = await db.category.findFirst({
+  const { amount, category, date, description, type, budgetId, goalId, loanId } = parsedBody.data
+  let categoryRow = await db.category.findFirst({
     where: {
       userId: userId,
       name: category,
     },
   })
 
+  // If category doesn't exist, create it (for mock categories)
   if (!categoryRow) {
-    throw new Error('category not found')
+    // Default icon based on category name
+    const defaultIcon = category === 'Salary' ? '💰' : 
+                        category === 'Freelance' ? '💼' : 
+                        category === 'Investment' ? '📈' :
+                        category === 'Food' ? '🍔' :
+                        category === 'Transport' ? '🚗' :
+                        category === 'Entertainment' ? '🎮' : '💵'
+
+    categoryRow = await db.category.create({
+      data: {
+        userId: userId,
+        name: category,
+        icon: defaultIcon,
+        type: type,
+      },
+    })
   }
 
   // NOTE: don't make confusion between $transaction ( db ) and db.transaction (table)
@@ -37,6 +53,9 @@ export async function createTransaction(userId: string, form: CreateTransactionS
         type,
         category: categoryRow.name,
         categoryIcon: categoryRow.icon,
+        budgetId,
+        goalId,
+        loanId,
       },
     }),
 
@@ -119,10 +138,16 @@ export async function getBalanceStats(userId: string, from: Date, to: Date) {
 
 export type GetTransactionHistoryResponseType = Awaited<ReturnType<typeof getTransactionsHistory>>
 
-export async function getTransactionsHistory(from: Date, to: Date) {
-  const user = await currentUser()
-  if (!user) {
-   throw new Error("Unauthorized");
+export async function getTransactionsHistory(from: Date, to: Date, userId?: string) {
+  // If userId is not provided, try to get it from currentUser
+  let user;
+  if (userId) {
+    user = { id: userId };
+  } else {
+    user = await currentUser();
+    if (!user) {
+      throw new Error("Unauthorized");
+    }
   }
 
   const userSettings = await db.userSettings.findUnique({
@@ -146,6 +171,29 @@ export async function getTransactionsHistory(from: Date, to: Date) {
     },
     orderBy: {
       date: 'desc',
+    },
+    include: {
+      budget: {
+        select: {
+          id: true,
+          name: true,
+          category: true,
+        },
+      },
+      goal: {
+        select: {
+          id: true,
+          name: true,
+          priority: true,
+        },
+      },
+      loan: {
+        select: {
+          id: true,
+          name: true,
+          loanType: true,
+        },
+      },
     },
   })
 

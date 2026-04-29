@@ -41,8 +41,8 @@ import {
 } from '@/components/ui/dropdown-menu'
 import {
   GetTransactionHistoryResponseType,
-  getTransactionsHistory,
 } from '@/lib/actions/transactions'
+import { useUser } from '@clerk/nextjs'
 import DeleteTransactionDialog from './DeleteTransactionDialog'
 
 interface Props {
@@ -115,6 +115,51 @@ const columns: ColumnDef<TransactionHistoryRow>[] = [
     ),
   },
   {
+    accessorKey: 'budget',
+    header: 'Budget',
+    cell: ({ row }) => {
+      const budget = row.original.budget
+      return budget ? (
+        <div className='text-sm text-muted-foreground'>
+          <div className='font-medium'>{budget.name}</div>
+          <div className='text-xs'>{budget.category || 'No category'}</div>
+        </div>
+      ) : (
+        <div className='text-sm text-muted-foreground'>-</div>
+      )
+    },
+  },
+  {
+    accessorKey: 'goal',
+    header: 'Goal',
+    cell: ({ row }) => {
+      const goal = row.original.goal
+      return goal ? (
+        <div className='text-sm text-muted-foreground'>
+          <div className='font-medium'>{goal.name}</div>
+          <div className='text-xs'>{goal.priority} priority</div>
+        </div>
+      ) : (
+        <div className='text-sm text-muted-foreground'>-</div>
+      )
+    },
+  },
+  {
+    accessorKey: 'loan',
+    header: 'Loan',
+    cell: ({ row }) => {
+      const loan = row.original.loan
+      return loan ? (
+        <div className='text-sm text-muted-foreground'>
+          <div className='font-medium'>{loan.name}</div>
+          <div className='text-xs'>{loan.loanType}</div>
+        </div>
+      ) : (
+        <div className='text-sm text-muted-foreground'>-</div>
+      )
+    },
+  },
+  {
     id: 'actions',
     enableHiding: false,
     cell: ({ row }) => <RowActions transaction={row.original} />,
@@ -130,10 +175,20 @@ const csvConfig = mkConfig({
 function TransactionTable({ from, to }: Props) {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const { user } = useUser()
 
   const history = useQuery<GetTransactionHistoryResponseType>({
     queryKey: ['transactions', 'history', from, to],
-    queryFn: () => getTransactionsHistory(DateToUTCDate(from), DateToUTCDate(to)),
+    queryFn: async () => {
+      if (!user?.id) throw new Error('User not authenticated')
+      
+      const response = await fetch(`/api/transactions?from=${DateToUTCDate(from).toISOString()}&to=${DateToUTCDate(to).toISOString()}`)
+      if (!response.ok) {
+        throw new Error('Failed to fetch transactions')
+      }
+      return response.json()
+    },
+    enabled: !!user?.id,
   })
 
   const handleExportCSV = (data: any[]) => {
