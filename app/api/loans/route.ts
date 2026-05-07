@@ -3,6 +3,8 @@ import { createLoan, getLoans } from '@/lib/actions/loan';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
+export const dynamic = 'force-dynamic';
+
 export interface LoanWithStatus {
   id: string;
   userId: string;

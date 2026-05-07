@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { parse } from 'json2csv';
 import { Parser } from 'json2csv';
 
+export const dynamic = 'force-dynamic';
+
 export interface ExportOptions {
   format: 'csv' | 'json';
   include: ('transactions' | 'budgets' | 'goals' | 'loans' | 'categories')[];

@@ -3,6 +3,8 @@ import { createBudget, getBudgets } from '@/lib/actions/budget';
 import { BudgetService } from '@/lib/services/budget.service';
 import { auth } from '@clerk/nextjs/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();

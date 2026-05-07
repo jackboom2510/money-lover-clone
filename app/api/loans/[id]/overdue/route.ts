@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getLoanOverdue } from '@/lib/actions/loan';
 import { auth } from '@clerk/nextjs/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { userId } = await auth();

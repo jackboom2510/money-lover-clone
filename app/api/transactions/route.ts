@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getTransactionsHistory } from '@/lib/actions/transactions';
 import { auth } from '@clerk/nextjs/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: NextRequest) {
   try {
     const { userId } = await auth();

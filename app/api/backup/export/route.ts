@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 
+export const dynamic = 'force-dynamic';
+
 // Redirect to the new comprehensive backup route
 export async function GET(req: NextRequest) {
   try {
