@@ -13,3 +13,9 @@ export const CreateTransactionSchema = z.object({
 })
 
 export type CreateTransactionSchemaType = z.infer<typeof CreateTransactionSchema>
+
+export const UpdateTransactionSchema = CreateTransactionSchema.extend({
+  id: z.string().min(1, 'Transaction id is required'),
+})
+
+export type UpdateTransactionSchemaType = z.infer<typeof UpdateTransactionSchema>

@@ -30,7 +30,7 @@ import { Button } from '@/components/ui/button'
 import { DataTableViewOptions } from '@/components/datatable/ColumnToggle'
 
 import { download, generateCsv, mkConfig } from 'export-to-csv'
-import { DownloadIcon, MoreHorizontal, TrashIcon } from 'lucide-react'
+import { DownloadIcon, MoreHorizontal, PencilIcon, TrashIcon } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +44,8 @@ import {
 } from '@/lib/actions/transactions'
 import { useUser } from '@clerk/nextjs'
 import DeleteTransactionDialog from './DeleteTransactionDialog'
+import EditTransactionDialog from '@/components/dialog/edit-transaction'
+import { TransactionType } from '@/types'
 
 interface Props {
   from: Date
@@ -335,9 +337,27 @@ export default TransactionTable
 
 function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showEditDialog, setShowEditDialog] = useState(false)
 
   return (
     <>
+      <EditTransactionDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        transaction={{
+          id: transaction.id,
+          amount: transaction.amount,
+          description: transaction.description,
+          date: transaction.date,
+          category: transaction.category,
+          type: transaction.type as TransactionType,
+          walletId: transaction.walletId,
+          budget: transaction.budget,
+          goal: transaction.goal,
+          loan: transaction.loan,
+        }}
+        userId={transaction.userId}
+      />
       <DeleteTransactionDialog
         open={showDeleteDialog}
         setOpen={setShowDeleteDialog}
@@ -353,6 +373,16 @@ function RowActions({ transaction }: { transaction: TransactionHistoryRow }) {
         <DropdownMenuContent align='end'>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className='flex items-center gap-2'
+            onSelect={(event) => {
+              event.preventDefault()
+              setShowEditDialog(true)
+            }}
+          >
+            <PencilIcon className='h-4 w-4 text-muted-foreground' />
+            Edit
+          </DropdownMenuItem>
           <DropdownMenuItem
             className='flex items-center gap-2'
             onSelect={() => {

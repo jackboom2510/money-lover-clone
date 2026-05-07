@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTransactionsHistory } from '@/lib/actions/transactions';
+import { getTransactionsHistory, updateTransaction } from '@/lib/actions/transactions';
 import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
@@ -48,6 +48,25 @@ export async function POST(req: NextRequest) {
     console.error('Error creating transaction:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Failed to create transaction' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(req: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const data = await req.json();
+    const transaction = await updateTransaction(userId, data);
+    return NextResponse.json(transaction);
+  } catch (error) {
+    console.error('Error updating transaction:', error);
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Failed to update transaction' },
       { status: 500 }
     );
   }

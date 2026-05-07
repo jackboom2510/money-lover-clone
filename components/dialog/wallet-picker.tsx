@@ -21,11 +21,17 @@ import { getWallets } from '@/lib/actions/wallets'
 interface Props {
   onChange: (value: string) => void
   userId: string
+  value?: string
 }
 
-function WalletPicker({ onChange, userId }: Props) {
+function WalletPicker({ onChange, userId, value: controlledValue }: Props) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
+
+  useEffect(() => {
+    if (controlledValue === undefined) return
+    setValue(controlledValue)
+  }, [controlledValue])
 
   useEffect(() => {
     if (!value) return

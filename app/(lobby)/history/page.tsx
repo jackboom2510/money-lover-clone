@@ -1,6 +1,5 @@
-import React from 'react'
-import HistoryClient from './_components/HistoryClient'
+import { redirect } from 'next/navigation'
 
 export default function HistoryPage() {
-  return <HistoryClient />
+  redirect('/transactions')
 }

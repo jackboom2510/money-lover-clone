@@ -33,11 +33,6 @@ export const siteConfig = {
       description: 'Manage your wallets.',
     },
     {
-      title: 'History',
-      href: '/history',
-      description: 'View transaction history.',
-    },
-    {
       title: 'Manage',
       href: '/manage',
       description: 'Manage your account settings.',

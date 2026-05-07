@@ -22,11 +22,17 @@ interface Props {
   type: TransactionType
   onChange: (value: string) => void
   userId: string
+  value?: string
 }
 
-function CategoryPicker({ type, onChange, userId }: Props) {
+function CategoryPicker({ type, onChange, userId, value: controlledValue }: Props) {
   const [open, setOpen] = React.useState(false)
   const [value, setValue] = React.useState('')
+
+  useEffect(() => {
+    if (controlledValue === undefined) return
+    setValue(controlledValue)
+  }, [controlledValue])
 
   useEffect(() => {
     if (!value) return
