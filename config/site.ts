@@ -28,6 +28,11 @@ export const siteConfig = {
       description: 'Add new transactions.',
     },
     {
+      title: 'Wallets',
+      href: '/wallets',
+      description: 'Manage your wallets.',
+    },
+    {
       title: 'History',
       href: '/history',
       description: 'View transaction history.',

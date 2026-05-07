@@ -13,7 +13,7 @@ export async function PUT(req: NextRequest, { params }: { params: { goalId: stri
 
     const { goalId } = params;
     const { amount } = await req.json();
-    const result = await contributeToGoal(goalId, amount);
+    const result = await contributeToGoal(userId, goalId, amount);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error contributing to goal:', error);

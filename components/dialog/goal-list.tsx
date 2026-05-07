@@ -30,7 +30,7 @@ export default function GoalList({ userId }: { userId: string }) {
     setContributeLoading((prev) => ({ ...prev, [goalId]: true }))
     setContributeError((prev) => ({ ...prev, [goalId]: '' }))
     try {
-      await contributeToGoal(goalId, parseFloat(contributeAmount[goalId] || '0'))
+      await contributeToGoal(userId, goalId, parseFloat(contributeAmount[goalId] || '0'))
       setContributeAmount((prev) => ({ ...prev, [goalId]: '' }))
       reload()
     } catch (err: any) {

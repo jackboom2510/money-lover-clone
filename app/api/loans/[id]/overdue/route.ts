@@ -12,7 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     const { id } = params;
-    const result = await getLoanOverdue(id);
+    const result = await getLoanOverdue(userId, id);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Error checking loan overdue status:', error);

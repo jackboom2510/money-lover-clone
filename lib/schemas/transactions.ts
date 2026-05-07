@@ -6,6 +6,7 @@ export const CreateTransactionSchema = z.object({
   date: z.coerce.date(),
   category: z.string(),
   type: z.union([z.literal('income'), z.literal('expense')]),
+  walletId: z.string().min(1, 'Wallet is required'),
   budgetId: z.string().optional(),
   goalId: z.string().optional(),
   loanId: z.string().optional(),

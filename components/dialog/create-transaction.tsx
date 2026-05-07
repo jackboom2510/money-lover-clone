@@ -149,7 +149,15 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input defaultValue={0} type='number' {...field} />
+                    <Input
+                      defaultValue={0}
+                      type='number'
+                      inputMode='decimal'
+                      min='0'
+                      step='0.01'
+                      className='[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                      {...field}
+                    />
                   </FormControl>
                   <FormDescription>Transaction amount (required)</FormDescription>
                 </FormItem>

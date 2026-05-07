@@ -1,47 +1,98 @@
-// budget.ts
 'use server'
 
 import { db } from '../db'
-import { z } from 'zod'
+import { BudgetSchema, BudgetSchemaType } from '../schemas/budget'
 
-const BudgetSchema = z.object({
-  userId: z.string(),
-  name: z.string(),
-  amount: z.number(),
-  description: z.string().optional(),
-  startDate: z.union([z.string(), z.date()]),
-  endDate: z.union([z.string(), z.date()]),
-})
-
-export async function createBudget(data: any) {
+export async function createBudget(data: BudgetSchemaType & { userId: string }) {
   const parsed = BudgetSchema.safeParse(data)
-  if (!parsed.success) throw new Error(parsed.error.message)
-  // Đảm bảo startDate, endDate là kiểu Date
-  const budgetData = {
-    ...parsed.data,
-    startDate: new Date(parsed.data.startDate),
-    endDate: new Date(parsed.data.endDate),
-    userId: data.userId, // Ensure userId is included
-    name: parsed.data.name || 'Untitled Budget', // Ensure name is provided
-    amount: parsed.data.amount || 0, // Ensure amount is provided
+  if (!parsed.success) {
+    throw new Error(parsed.error.message)
   }
-  return db.budget.create({ data: budgetData })
+
+  return db.budget.create({
+    data: {
+      userId: data.userId,
+      name: parsed.data.name,
+      amount: parsed.data.amount,
+      description: parsed.data.description,
+      startDate: parsed.data.startDate,
+      endDate: parsed.data.endDate,
+      category: parsed.data.category,
+    },
+  })
 }
 
 export async function getBudgets(userId: string) {
-  return db.budget.findMany({ where: { userId } })
+  return db.budget.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function syncBudgetState(userId: string, budgetId: string) {
+  const budget = await db.budget.findFirst({
+    where: {
+      id: budgetId,
+      userId,
+    },
+    select: {
+      id: true,
+      amount: true,
+      alertThreshold: true,
+      startDate: true,
+      endDate: true,
+      isActive: true,
+    },
+  })
+
+  if (!budget) {
+    throw new Error('Budget not found')
+  }
+
+  const spentAggregate = await db.transaction.aggregate({
+    where: {
+      userId,
+      budgetId,
+      type: 'expense',
+    },
+    _sum: {
+      amount: true,
+    },
+  })
+
+  const spent = spentAggregate._sum.amount || 0
+
+  return db.budget.update({
+    where: { id: budget.id },
+    data: { spent },
+  })
 }
 
 export async function checkBudget(userId: string, budgetId: string) {
-  // Giả sử có bảng transaction liên kết với budget
-  const budget = await db.budget.findUnique({ where: { id: budgetId, userId } })
-  const spent = await db.transaction.aggregate({
-    where: { userId, budgetId },
-    _sum: { amount: true },
+  const budget = await db.budget.findFirst({
+    where: { id: budgetId, userId },
   })
-  const spentAmount = spent._sum.amount || 0
+
+  const spentAggregate = await db.transaction.aggregate({
+    where: {
+      userId,
+      budgetId,
+      type: 'expense',
+    },
+    _sum: {
+      amount: true,
+    },
+  })
+
+  const spentAmount = spentAggregate._sum.amount || 0
+
   if (!budget) {
     return { budget: null, spent: spentAmount, exceeded: false }
   }
-  return { budget, spent: spentAmount, exceeded: spentAmount > budget.amount }
+
+  return {
+    budget,
+    spent: spentAmount,
+    exceeded: spentAmount > budget.amount,
+  }
 }

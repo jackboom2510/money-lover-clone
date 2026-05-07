@@ -19,8 +19,9 @@ export default function CreateLoanForm({ userId, onCreated }: { userId: string, 
         userId,
         name,
         totalAmount: parseFloat(totalAmount),
+        loanType: 'personal',
         description,
-        dueDate,
+        dueDate: new Date(dueDate),
       })
       setName('')
       setTotalAmount('')

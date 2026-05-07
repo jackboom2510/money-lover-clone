@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -42,14 +42,19 @@ model Transaction {
   category     String
   categoryIcon String
 
-  budgetId   String? // Tham chiếu đến Budget
+  walletId   String
+  wallet     Wallet @relation(fields: [walletId], references: [id], onDelete: Cascade)
+
+  budgetId   String?
   budget     Budget? @relation(fields: [budgetId], references: [id])
-  
-  goalId     String? // Tham chiếu đến Goal
+
+  goalId     String?
   goal       Goal? @relation(fields: [goalId], references: [id])
-  
-  loanId     String? // Tham chiếu đến Loan
+
+  loanId     String?
   loan       Loan? @relation(fields: [loanId], references: [id])
+
+  @@index([walletId])
 }
 
 model MonthHistory {
@@ -139,6 +144,20 @@ model Budget {
   transactions Transaction[]
 }
 
+model Wallet {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  type      String   @default("cash") // cash, bank, e-wallet, credit-card
+  currency  String   @default("VND")
+  icon      String   @default("💰")
+  createdAt DateTime @default(now())
+
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
 model Notification {
   id        String   @id @default(uuid())
   userId    String
@@ -148,12 +167,12 @@ model Notification {
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
   readAt    DateTime?
-  
+
   // Optional references to related entities
   goalId    String?
   loanId    String?
   budgetId  String?
-  
+
   @@index([userId, isRead])
   @@index([createdAt])
 }

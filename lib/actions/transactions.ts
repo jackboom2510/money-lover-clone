@@ -1,6 +1,9 @@
 'use server'
 
 import { db } from '../db'
+import { syncBudgetState } from './budget'
+import { syncGoalState } from './goal'
+import { syncLoanState } from './loan'
 import { CreateTransactionSchema, CreateTransactionSchemaType } from '../schemas/transactions'
 import { GetFormatterForCurrency } from '../utils'
 import { currentUser } from '@clerk/nextjs/server'
@@ -12,7 +15,20 @@ export async function createTransaction(userId: string, form: CreateTransactionS
     throw new Error(parsedBody.error.message)
   }
 
-  const { amount, category, date, description, type, budgetId, goalId, loanId } = parsedBody.data
+  const { amount, category, date, description, type, walletId, budgetId, goalId, loanId } = parsedBody.data
+
+  // Validate wallet exists and belongs to user
+  const wallet = await db.wallet.findUnique({
+    where: {
+      id: walletId,
+      userId: userId,
+    },
+  })
+
+  if (!wallet) {
+    throw new Error('Wallet not found')
+  }
+
   let categoryRow = await db.category.findFirst({
     where: {
       userId: userId,
@@ -47,6 +63,7 @@ export async function createTransaction(userId: string, form: CreateTransactionS
     db.transaction.create({
       data: {
         userId: userId,
+        walletId,
         amount,
         date,
         description: description || '',
@@ -113,6 +130,18 @@ export async function createTransaction(userId: string, form: CreateTransactionS
       },
     }),
   ])
+
+  if (budgetId) {
+    await syncBudgetState(userId, budgetId)
+  }
+
+  if (goalId) {
+    await syncGoalState(userId, goalId)
+  }
+
+  if (loanId) {
+    await syncLoanState(userId, loanId)
+  }
 }
 
 export async function getBalanceStats(userId: string, from: Date, to: Date) {
@@ -221,6 +250,8 @@ export async function DeleteTransaction(id: string) {
     throw new Error('bad request')
   }
 
+  const { budgetId, goalId, loanId } = transaction
+
   await db.$transaction([
     // Delete transaction from db
     db.transaction.delete({
@@ -275,4 +306,16 @@ export async function DeleteTransaction(id: string) {
       },
     }),
   ])
+
+  if (budgetId) {
+    await syncBudgetState(user.id, budgetId)
+  }
+
+  if (goalId) {
+    await syncGoalState(user.id, goalId)
+  }
+
+  if (loanId) {
+    await syncLoanState(user.id, loanId)
+  }
 }

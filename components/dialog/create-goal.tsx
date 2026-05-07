@@ -19,8 +19,9 @@ export default function CreateGoalForm({ userId, onCreated }: { userId: string, 
         userId,
         name,
         targetAmount: parseFloat(targetAmount),
+        priority: 'medium',
         description,
-        targetDate,
+        targetDate: new Date(targetDate),
       })
       setName('')
       setTargetAmount('')

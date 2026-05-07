@@ -20,9 +20,10 @@ export default function CreateBudgetForm({ userId, onCreated }: { userId: string
         userId,
         name,
         amount: parseFloat(amount),
+        category: 'general',
         description,
-        startDate,
-        endDate,
+        startDate: new Date(startDate),
+        endDate: new Date(endDate),
       })
       setName('')
       setAmount('')

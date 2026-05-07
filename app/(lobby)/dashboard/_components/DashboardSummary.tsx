@@ -6,7 +6,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Button } from '@/components/ui/button'
 import { Download, Target, PiggyBank, CreditCard } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
-import { getDashboardSummary, exportDashboardSummary } from '@/lib/services/summary.service'
 
 interface SummaryCardProps {
   title: string
@@ -42,7 +41,13 @@ export default function DashboardSummary() {
 
   const { data: summary, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
-    queryFn: () => getDashboardSummary(user?.id || ''),
+    queryFn: async () => {
+      const response = await fetch('/api/dashboard/summary')
+      if (!response.ok) {
+        throw new Error('Failed to fetch dashboard summary')
+      }
+      return response.json()
+    },
     enabled: !!user?.id,
   })
 
@@ -50,7 +55,13 @@ export default function DashboardSummary() {
     if (!user?.id) return
     
     try {
-      const csv = await exportDashboardSummary(user.id)
+      const response = await fetch('/api/dashboard/summary', {
+        method: 'POST',
+      })
+      if (!response.ok) {
+        throw new Error('Failed to export dashboard summary')
+      }
+      const csv = await response.text()
       const blob = new Blob([csv], { type: 'text/csv' })
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')

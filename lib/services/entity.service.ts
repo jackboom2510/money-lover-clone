@@ -1,5 +1,4 @@
 import { db } from '@/lib/db'
-import { auth } from '@clerk/nextjs/server'
 
 export interface BudgetOption {
   id: string
@@ -15,6 +14,7 @@ export interface GoalOption {
   priority: string
   targetAmount: number
   contributed: number
+  isCompleted: boolean
 }
 
 export interface LoanOption {
@@ -23,6 +23,7 @@ export interface LoanOption {
   loanType: string
   totalAmount: number
   paidAmount: number
+  status: string
 }
 
 export async function getBudgetOptions(userId: string): Promise<BudgetOption[]> {
@@ -42,9 +43,10 @@ export async function getBudgetOptions(userId: string): Promise<BudgetOption[]> 
       orderBy: { createdAt: 'desc' },
     })
 
-    // Return all budgets (less restrictive filtering)
     return budgets
-      .filter(budget => budget.isActive)
+      .filter(
+        (budget) => budget.isActive && new Date() >= budget.startDate && new Date() <= budget.endDate
+      )
       .map(budget => ({
         id: budget.id,
         name: budget.name,
@@ -79,6 +81,7 @@ export async function getGoalOptions(userId: string): Promise<GoalOption[]> {
       priority: goal.priority,
       targetAmount: goal.targetAmount,
       contributed: goal.contributed,
+      isCompleted: goal.isCompleted,
     }))
   } catch (error) {
     console.error('Error fetching goals:', error)
@@ -107,6 +110,7 @@ export async function getLoanOptions(userId: string): Promise<LoanOption[]> {
       loanType: loan.loanType,
       totalAmount: loan.totalAmount,
       paidAmount: loan.paidAmount,
+      status: loan.status,
     }))
   } catch (error) {
     console.error('Error fetching loans:', error)

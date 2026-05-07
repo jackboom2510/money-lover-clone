@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createLoan, getLoans } from '@/lib/actions/loan';
+import { createLoan, getLoans, syncLoanState } from '@/lib/actions/loan';
 import { auth } from '@clerk/nextjs/server';
 import { db } from '@/lib/db';
 
@@ -87,13 +87,12 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'Loan not found' }, { status: 404 });
     }
 
-    const updatedLoan = await db.loan.update({
+    await db.loan.update({
       where: { id },
-      data: {
-        ...data,
-        updatedAt: new Date()
-      }
+      data
     });
+
+    const updatedLoan = await syncLoanState(userId, id)
 
     return NextResponse.json(updatedLoan);
   } catch (error) {
