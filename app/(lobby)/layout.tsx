@@ -2,12 +2,7 @@ import { getCachedUser } from '@/lib/queries/user'
 import { SiteFooter } from '@/components/layouts/site-footer'
 import { SiteHeader } from '@/components/layouts/site-header'
 
-interface LobyLayoutProps
-  extends React.PropsWithChildren<{
-    modal: React.ReactNode
-  }> {}
-
-export default async function LobyLayout({ children }: LobyLayoutProps) {
+export default async function LobyLayout({ children }: React.PropsWithChildren) {
   const user = await getCachedUser()
 
   return (

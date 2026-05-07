@@ -31,9 +31,17 @@ function DeleteTransactionDialog({ open, setOpen, transactionId }: Props) {
         id: transactionId,
       })
 
-      await queryClient.invalidateQueries({
-        queryKey: ['transactions'],
-      })
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ['transactions'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['overview'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['wallet-balance'],
+        }),
+      ])
     },
     onError: () => {
       toast.error('Something went wrong', {

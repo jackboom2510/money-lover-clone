@@ -35,6 +35,7 @@ import { toast } from 'sonner'
 import { TransactionType } from '@/types'
 import { CreateTransactionSchema, CreateTransactionSchemaType } from '@/lib/schemas/transactions'
 import CategoryPicker from './category-picker'
+import WalletPicker from './wallet-picker'
 import { createTransaction } from '@/lib/actions/transactions'
 import { BudgetSelect, GoalSelect, LoanSelect } from '@/components/ui/entity-select'
 
@@ -60,11 +61,18 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
     [form]
   )
 
+  const handleWalletChange = useCallback(
+    (value: string) => {
+      form.setValue('walletId', value)
+    },
+    [form]
+  )
+
   const queryClient = useQueryClient()
 
   const { mutate, isPending } = useMutation({
     mutationFn: (values: CreateTransactionSchemaType) => createTransaction(userId, values),
-    onSuccess: () => {
+    onSuccess: async (_, values) => {
       toast.success('Transaction created successfully 🎉', {
         id: 'create-transaction',
       })
@@ -78,8 +86,16 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
       })
 
       // After creating a transaction, we need to invalidate the overview query which will refetch data in the homepage
-      queryClient.invalidateQueries({
+      await queryClient.invalidateQueries({
         queryKey: ['overview'],
+      })
+
+      await queryClient.invalidateQueries({
+        queryKey: ['transactions'],
+      })
+
+      await queryClient.invalidateQueries({
+        queryKey: ['wallet-balance', values.walletId],
       })
 
       setOpen((prev) => !prev)
@@ -136,6 +152,21 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
                     <Input defaultValue={0} type='number' {...field} />
                   </FormControl>
                   <FormDescription>Transaction amount (required)</FormDescription>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name='walletId'
+              render={({ field }) => (
+                <FormItem className='flex flex-col'>
+                  <FormLabel>Wallet</FormLabel>
+                  <FormControl>
+                    <WalletPicker userId={userId} onChange={handleWalletChange} />
+                  </FormControl>
+                  <FormDescription>Select which wallet this transaction belongs to</FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />
