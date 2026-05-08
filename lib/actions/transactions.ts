@@ -427,7 +427,7 @@ export async function updateTransaction(userId: string, form: UpdateTransactionS
     loanId: existingTransaction.loanId,
   }
 
-  await db.$transaction(async (tx) => {
+  const updatedTransaction = await db.$transaction(async (tx) => {
     await tx.transaction.update({
       where: {
         id,
@@ -528,8 +528,39 @@ export async function updateTransaction(userId: string, form: UpdateTransactionS
         update: newYearDelta,
       })
     }
+    return tx.transaction.findUnique({
+      where: {
+        id,
+        userId,
+      },
+      include: {
+        budget: {
+          select: {
+            id: true,
+            name: true,
+            category: true,
+          },
+        },
+        goal: {
+          select: {
+            id: true,
+            name: true,
+            priority: true,
+          },
+        },
+        loan: {
+          select: {
+            id: true,
+            name: true,
+            loanType: true,
+          },
+        },
+      },
+    })
   })
 
   await syncLinkedEntities(userId, oldLinkedIds)
   await syncLinkedEntities(userId, { budgetId, goalId, loanId })
+
+  return updatedTransaction
 }

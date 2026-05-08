@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { DateToUTCDate, cn } from '@/lib/utils'
+import { DateToUTCDateOnly, cn } from '@/lib/utils'
 import { ReactNode, useCallback, useState } from 'react'
 
 import React from 'react'
@@ -91,6 +91,14 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
       })
 
       await queryClient.invalidateQueries({
+        queryKey: ['overview', 'history'],
+      })
+
+      await queryClient.invalidateQueries({
+        queryKey: ['dashboard-summary'],
+      })
+
+      await queryClient.invalidateQueries({
         queryKey: ['transactions'],
       })
 
@@ -108,7 +116,7 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
 
       mutate({
         ...values,
-        date: DateToUTCDate(values.date),
+        date: DateToUTCDateOnly(values.date),
       })
     },
     [mutate]

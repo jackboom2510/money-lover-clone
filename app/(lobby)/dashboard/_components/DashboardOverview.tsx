@@ -3,30 +3,31 @@
 import { useQuery } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Download, Target, PiggyBank, CreditCard, Plus } from 'lucide-react'
+import { Download, Target, PiggyBank, Landmark, Plus } from 'lucide-react'
 import { useUser } from '@clerk/nextjs'
-import Link from 'next/link'
+import GoalManagementDialog from '@/components/dialog/goal-management-dialog'
+import BudgetManagementDialog from '@/components/dialog/budget-management-dialog'
+import LoanManagementDialog from '@/components/dialog/loan-management-dialog'
+import { getCreateUserSetting } from '@/lib/actions/user-setting'
+import { GetFormatterForCurrency } from '@/lib/utils'
 
 interface SummaryCardProps {
   badge: string
   titleText: string
   description: string
   icon: React.ReactNode
-  accentClasses: {
-    shell: string
-    border: string
-    badge: string
-    title: string
-    bodyGlow: string
-    cta: string
-  }
+  shellClassName: string
+  borderClassName: string
+  badgeClassName: string
+  titleClassName: string
+  glowClassName: string
+  buttonClassName: string
   metrics: Array<{
     label: string
     value: string | number
     color?: string
   }>
-  href: string
-  actionLabel: string
+  actionTrigger: React.ReactNode
 }
 
 function SummaryMetric({
@@ -53,29 +54,32 @@ function SummaryCard({
   titleText,
   description,
   icon,
-  accentClasses,
+  shellClassName,
+  borderClassName,
+  badgeClassName,
+  titleClassName,
+  glowClassName,
   metrics,
-  href,
-  actionLabel,
+  actionTrigger,
 }: SummaryCardProps) {
   return (
     <section
-      className={`group relative overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${accentClasses.shell} ${accentClasses.border}`}
+      className={`group relative overflow-hidden rounded-3xl border shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${shellClassName} ${borderClassName}`}
     >
       <div className="absolute inset-0 opacity-40">
-        <div className={`absolute inset-0 blur-3xl ${accentClasses.bodyGlow}`}></div>
+        <div className={`absolute inset-0 blur-3xl ${glowClassName}`}></div>
       </div>
 
       <div className="relative flex h-full flex-col">
         <div className="border-b border-white/40 px-6 py-6">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-3">
-              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${accentClasses.badge}`}>
+              <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${badgeClassName}`}>
                 <span className="h-2 w-2 rounded-full bg-current opacity-70"></span>
                 {badge}
               </div>
               <div className="space-y-2">
-                <h2 className={`text-3xl font-bold tracking-tight ${accentClasses.title}`}>{titleText}</h2>
+                <h2 className={`text-3xl font-bold tracking-tight ${titleClassName}`}>{titleText}</h2>
                 <p className="text-sm text-slate-600">{description}</p>
               </div>
             </div>
@@ -98,14 +102,7 @@ function SummaryCard({
             ))}
           </div>
 
-          <div className="mt-auto">
-            <Link href={href}>
-              <Button size="lg" className={`h-11 w-full border-0 text-white shadow-lg ${accentClasses.cta}`}>
-                <Plus className="mr-2 h-4 w-4" />
-                {actionLabel}
-              </Button>
-            </Link>
-          </div>
+          <div className="mt-auto">{actionTrigger}</div>
         </div>
       </div>
     </section>
@@ -137,6 +134,11 @@ function LoadingCard() {
 
 export default function DashboardOverview() {
   const { user } = useUser()
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', user?.id],
+    queryFn: () => getCreateUserSetting(user!.id),
+    enabled: !!user?.id,
+  })
 
   const { data: summary, isLoading } = useQuery({
     queryKey: ['dashboard-summary'],
@@ -194,13 +196,11 @@ export default function DashboardOverview() {
     )
   }
 
-  if (!summary) {
-    return (
-      <div className="text-center py-8 text-muted-foreground">
-        No data available
-      </div>
-    )
+  if (!summary || !user) {
+    return <div className="py-8 text-center text-muted-foreground">No data available</div>
   }
+
+  const formatter = GetFormatterForCurrency(userSettings?.currency || 'USD')
 
   return (
     <div className="space-y-6">
@@ -221,26 +221,49 @@ export default function DashboardOverview() {
           titleText="Theo dõi tiến độ"
           description="Xây dựng tương lai tài chính vững chắc"
           icon={<Target className="h-6 w-6 text-purple-700" />}
-          accentClasses={{
-            shell: 'bg-gradient-to-br from-white to-purple-50/80',
-            border: 'border-purple-100/70',
-            badge: 'bg-purple-100/80 text-purple-700',
-            title: 'text-purple-900',
-            bodyGlow: 'bg-purple-300/30',
-            cta: 'bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800',
-          }}
+          shellClassName="bg-gradient-to-br from-white to-purple-50/80"
+          borderClassName="border-purple-100/70"
+          badgeClassName="bg-purple-100/80 text-purple-700"
+          titleClassName="text-purple-900"
+          glowClassName="bg-purple-300/30"
+          buttonClassName="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
           metrics={[
             { label: 'Total Goals', value: summary.goals.totalGoals },
             {
-              label: 'Completed',
-              value: `${summary.goals.completedGoals} (${summary.goals.completionRate.toFixed(1)}%)`,
-              color: summary.goals.completionRate > 50 ? 'text-green-600' : 'text-orange-600',
+              label: 'Progress',
+              value: `${(
+                summary.goals.totalTargetAmount > 0
+                  ? (summary.goals.totalContributed / summary.goals.totalTargetAmount) * 100
+                  : 0
+              ).toFixed(1)}%`,
+              color:
+                summary.goals.totalTargetAmount > 0 &&
+                (summary.goals.totalContributed / summary.goals.totalTargetAmount) * 100 >= 100
+                  ? 'text-green-600'
+                  : 'text-orange-600',
             },
-            { label: 'Target Amount', value: `$${summary.goals.totalTargetAmount.toFixed(2)}` },
-            { label: 'Contributed', value: `$${summary.goals.totalContributed.toFixed(2)}` },
+            { label: 'Target Amount', value: formatter.format(summary.goals.totalTargetAmount) },
+            { label: 'Contributed', value: formatter.format(summary.goals.totalContributed) },
+            {
+              label: 'Goals Completed',
+              value: `${summary.goals.completedGoals}/${summary.goals.totalGoals}`,
+              color: summary.goals.completedGoals > 0 ? 'text-green-600' : 'text-slate-600',
+            },
           ]}
-          href="/goals"
-          actionLabel="Quản lý Mục tiêu"
+          actionTrigger={
+            <GoalManagementDialog
+              userId={user.id}
+              trigger={
+                <Button
+                  size="lg"
+                  className="h-11 w-full border-0 bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg hover:from-purple-700 hover:to-purple-800"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Quản lý Mục tiêu
+                </Button>
+              }
+            />
+          }
         />
 
         <SummaryCard
@@ -248,19 +271,17 @@ export default function DashboardOverview() {
           titleText="Kiểm soát chi tiêu"
           description="Quản lý tài chính thông minh và hiệu quả"
           icon={<PiggyBank className="h-6 w-6 text-blue-700" />}
-          accentClasses={{
-            shell: 'bg-gradient-to-br from-white to-blue-50/80',
-            border: 'border-blue-100/70',
-            badge: 'bg-blue-100/80 text-blue-700',
-            title: 'text-blue-900',
-            bodyGlow: 'bg-blue-300/30',
-            cta: 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800',
-          }}
+          shellClassName="bg-gradient-to-br from-white to-blue-50/80"
+          borderClassName="border-blue-100/70"
+          badgeClassName="bg-blue-100/80 text-blue-700"
+          titleClassName="text-blue-900"
+          glowClassName="bg-blue-300/30"
+          buttonClassName="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
           metrics={[
             { label: 'Total Budgets', value: summary.budgets.totalBudgets },
             { label: 'Active', value: summary.budgets.activeBudgets },
-            { label: 'Total Budget', value: `$${summary.budgets.totalBudgetAmount.toFixed(2)}` },
-            { label: 'Spent', value: `$${summary.budgets.totalSpent.toFixed(2)}` },
+            { label: 'Total Budget', value: formatter.format(summary.budgets.totalBudgetAmount) },
+            { label: 'Spent', value: formatter.format(summary.budgets.totalSpent) },
             {
               label: 'Utilization',
               value: `${summary.budgets.utilizationRate.toFixed(1)}%`,
@@ -272,36 +293,58 @@ export default function DashboardOverview() {
                     : 'text-green-600',
             },
           ]}
-          href="/budgets"
-          actionLabel="Quản lý Ngân sách"
+          actionTrigger={
+            <BudgetManagementDialog
+              userId={user.id}
+              trigger={
+                <Button
+                  size="lg"
+                  className="h-11 w-full border-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:from-blue-700 hover:to-blue-800"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Quản lý Ngân sách
+                </Button>
+              }
+            />
+          }
         />
 
         <SummaryCard
           badge="Khoản vay"
           titleText="Theo dõi các khoản vay"
           description="Quản lý và theo dõi các khoản vay của bạn"
-          icon={<CreditCard className="h-6 w-6 text-orange-700" />}
-          accentClasses={{
-            shell: 'bg-gradient-to-br from-white to-orange-50/80',
-            border: 'border-orange-100/70',
-            badge: 'bg-orange-100/80 text-orange-700',
-            title: 'text-orange-900',
-            bodyGlow: 'bg-orange-300/30',
-            cta: 'bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800',
-          }}
+          icon={<Landmark className="h-6 w-6 text-orange-700" />}
+          shellClassName="bg-gradient-to-br from-white to-orange-50/80"
+          borderClassName="border-orange-100/70"
+          badgeClassName="bg-orange-100/80 text-orange-700"
+          titleClassName="text-orange-900"
+          glowClassName="bg-orange-300/30"
+          buttonClassName="bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800"
           metrics={[
             { label: 'Total Loans', value: summary.loans.totalLoans },
             { label: 'Active', value: summary.loans.activeLoans },
-            { label: 'Total Amount', value: `$${summary.loans.totalLoanAmount.toFixed(2)}` },
-            { label: 'Paid', value: `$${summary.loans.totalPaidAmount.toFixed(2)}` },
+            { label: 'Total Amount', value: formatter.format(summary.loans.totalLoanAmount) },
+            { label: 'Paid', value: formatter.format(summary.loans.totalPaidAmount) },
             {
               label: 'Outstanding',
-              value: `$${summary.loans.outstandingAmount.toFixed(2)}`,
+              value: formatter.format(summary.loans.outstandingAmount),
               color: summary.loans.overdueLoans > 0 ? 'text-red-600' : 'text-slate-600',
             },
           ]}
-          href="/loans"
-          actionLabel="Quản lý Khoản vay"
+          actionTrigger={
+            <LoanManagementDialog
+              userId={user.id}
+              trigger={
+                <Button
+                  size="lg"
+                  className="h-11 w-full border-0 bg-gradient-to-r from-orange-600 to-orange-700 text-white shadow-lg hover:from-orange-700 hover:to-orange-800"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Quản lý Khoản vay
+                </Button>
+              }
+            />
+          }
         />
       </div>
     </div>

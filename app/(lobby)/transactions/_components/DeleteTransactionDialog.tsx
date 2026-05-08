@@ -39,6 +39,12 @@ function DeleteTransactionDialog({ open, setOpen, transactionId }: Props) {
           queryKey: ['overview'],
         }),
         queryClient.invalidateQueries({
+          queryKey: ['overview', 'history'],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ['dashboard-summary'],
+        }),
+        queryClient.invalidateQueries({
           queryKey: ['wallet-balance'],
         }),
       ])

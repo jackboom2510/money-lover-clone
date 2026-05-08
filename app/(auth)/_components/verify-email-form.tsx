@@ -53,7 +53,7 @@ export function VerifyEmailForm() {
       if (completeSignUp.status === 'complete') {
         await setActive({ session: completeSignUp.createdSessionId })
 
-        router.push(`${window.location.origin}/`)
+        router.push('/')
       }
     } catch (err) {
       showErrorToast(err)
@@ -90,6 +90,13 @@ export function VerifyEmailForm() {
           Create account
           <span className='sr-only'>Create account</span>
         </Button>
+        <Button type='button' variant='outline' onClick={() => router.push('/signup')}>
+          Start over
+        </Button>
+        <p className='text-sm text-muted-foreground'>
+          If you refreshed this page or verification stopped working, start over from sign up and
+          request a new code.
+        </p>
       </form>
     </Form>
   )

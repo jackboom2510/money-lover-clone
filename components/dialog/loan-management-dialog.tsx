@@ -24,7 +24,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { createLoan, getLoans } from '@/lib/actions/loan'
+import { getCreateUserSetting } from '@/lib/actions/user-setting'
 import { LoanSchema } from '@/lib/schemas/loan'
+import { GetFormatterForCurrency } from '@/lib/utils'
 
 interface Props {
   trigger: ReactNode
@@ -40,14 +42,21 @@ function LoanManagementDialog({ trigger, userId }: Props) {
     queryFn: () => getLoans(userId),
   })
 
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', userId],
+    queryFn: () => getCreateUserSetting(userId),
+  })
+
   const createMutation = useMutation({
     mutationFn: (data: any) => createLoan({ ...data, userId }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['loans', userId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] })
+      queryClient.invalidateQueries({ queryKey: ['loan-options'] })
       toast.success('Khoản vay đã được tạo thành công!')
       form.reset()
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast.error(error.message || 'Không thể tạo khoản vay')
     },
   })
@@ -66,47 +75,46 @@ function LoanManagementDialog({ trigger, userId }: Props) {
     createMutation.mutate(data)
   }
 
+  const formatter = GetFormatterForCurrency(userSettings?.currency || 'USD')
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className='max-h-[80vh] max-w-2xl overflow-y-auto'>
         <DialogHeader>
           <DialogTitle>Quản lý Khoản vay</DialogTitle>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Create New Loan Form */}
-          <div className="border-b pb-6">
-            <h3 className="text-lg font-medium mb-4">Tạo Khoản vay Mới</h3>
+
+        <div className='space-y-6'>
+          <div className='border-b pb-6'>
+            <h3 className='mb-4 text-lg font-medium'>Tạo Khoản vay Mới</h3>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField
                     control={form.control}
-                    name="name"
+                    name='name'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Tên khoản vay</FormLabel>
                         <FormControl>
-                          <Input placeholder="Ví dụ: Vay mua xe" {...field} />
+                          <Input placeholder='Ví dụ: Vay mua xe' {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-                  
+
                   <FormField
                     control={form.control}
-                    name="totalAmount"
+                    name='totalAmount'
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tổng số tiền vay ($)</FormLabel>
+                        <FormLabel>Tổng số tiền vay</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="number" 
-                            placeholder="25000" 
+                          <Input
+                            type='number'
+                            placeholder='25000'
                             {...field}
                             onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                           />
@@ -117,26 +125,26 @@ function LoanManagementDialog({ trigger, userId }: Props) {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <FormField
                     control={form.control}
-                    name="loanType"
+                    name='loanType'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Loại khoản vay</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Chọn loại vay" />
+                              <SelectValue placeholder='Chọn loại vay' />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="auto">Vay mua ô tô</SelectItem>
-                            <SelectItem value="mortgage">Vay mua nhà</SelectItem>
-                            <SelectItem value="personal">Vay cá nhân</SelectItem>
-                            <SelectItem value="student">Vay học sinh</SelectItem>
-                            <SelectItem value="business">Vay kinh doanh</SelectItem>
-                            <SelectItem value="other">Khác</SelectItem>
+                            <SelectItem value='auto'>Vay mua ô tô</SelectItem>
+                            <SelectItem value='mortgage'>Vay mua nhà</SelectItem>
+                            <SelectItem value='personal'>Vay cá nhân</SelectItem>
+                            <SelectItem value='student'>Vay học sinh</SelectItem>
+                            <SelectItem value='business'>Vay kinh doanh</SelectItem>
+                            <SelectItem value='other'>Khác</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -146,15 +154,19 @@ function LoanManagementDialog({ trigger, userId }: Props) {
 
                   <FormField
                     control={form.control}
-                    name="dueDate"
+                    name='dueDate'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Ngày đáo hạn</FormLabel>
                         <FormControl>
-                          <Input 
-                            type="date" 
+                          <Input
+                            type='date'
                             {...field}
-                            value={field.value instanceof Date ? field.value.toISOString().split('T')[0] : field.value}
+                            value={
+                              field.value instanceof Date
+                                ? field.value.toISOString().split('T')[0]
+                                : field.value
+                            }
                             onChange={(e) => field.onChange(new Date(e.target.value))}
                           />
                         </FormControl>
@@ -164,53 +176,53 @@ function LoanManagementDialog({ trigger, userId }: Props) {
                   />
                 </div>
 
-                <Button 
-                  type="submit" 
-                  className="w-full"
-                  disabled={createMutation.isPending}
-                >
+                <Button type='submit' className='w-full' disabled={createMutation.isPending}>
                   {createMutation.isPending ? 'Đang tạo...' : 'Tạo Khoản vay'}
                 </Button>
               </form>
             </Form>
           </div>
 
-          {/* Existing Loans List */}
           <div>
-            <h3 className="text-lg font-medium mb-4">Khoản vay Hiện có</h3>
+            <h3 className='mb-4 text-lg font-medium'>Khoản vay Hiện có</h3>
             {isLoading ? (
-              <div className="text-center py-8 text-muted-foreground">
-                Đang tải...
-              </div>
+              <div className='py-8 text-center text-muted-foreground'>Đang tải...</div>
             ) : loans.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground">
-                <div className="text-4xl mb-2">🏦</div>
+              <div className='py-8 text-center text-muted-foreground'>
+                <div className='mb-2 text-4xl'>🏦</div>
                 <p>Chưa có khoản vay nào</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className='space-y-3'>
                 {loans.map((loan: any) => (
-                  <div key={loan.id} className="flex items-center justify-between p-4 border rounded-lg">
+                  <div key={loan.id} className='flex items-center justify-between rounded-lg border p-4'>
                     <div>
-                      <h4 className="font-medium">{loan.name}</h4>
-                      <p className="text-sm text-muted-foreground">
-                        ${loan.paidAmount?.toFixed(2) || 0} / ${loan.totalAmount?.toFixed(2) || 0}
+                      <h4 className='font-medium'>{loan.name}</h4>
+                      <p className='text-sm text-muted-foreground'>
+                        {formatter.format(loan.paidAmount || 0)} / {formatter.format(loan.totalAmount || 0)}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-2 py-1 text-xs rounded ${
-                        loan.status === 'active' ? 'bg-green-100 text-green-800' :
-                        loan.status === 'overdue' ? 'bg-red-100 text-red-800' :
-                        loan.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {loan.status === 'active' ? 'Đang trả' :
-                         loan.status === 'overdue' ? 'Quá hạn' :
-                         loan.status === 'paid' ? 'Đã trả' : 'Không xác định'}
+                    <div className='text-right'>
+                      <span
+                        className={`inline-block rounded px-2 py-1 text-xs ${
+                          loan.status === 'active'
+                            ? 'bg-green-100 text-green-800'
+                            : loan.status === 'overdue'
+                              ? 'bg-red-100 text-red-800'
+                              : loan.status === 'paid'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {loan.status === 'active'
+                          ? 'Đang trả'
+                          : loan.status === 'overdue'
+                            ? 'Quá hạn'
+                            : loan.status === 'paid'
+                              ? 'Đã trả'
+                              : 'Không xác định'}
                       </span>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        {loan.loanType}
-                      </div>
+                      <div className='mt-1 text-sm text-muted-foreground'>{loan.loanType}</div>
                     </div>
                   </div>
                 ))}

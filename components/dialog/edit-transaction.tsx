@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { DateToUTCDate, cn } from '@/lib/utils'
+import { DateToUTCDateOnly, cn } from '@/lib/utils'
 import { ReactNode, useCallback, useEffect, useState } from 'react'
 import React from 'react'
 import { useForm } from 'react-hook-form'
@@ -135,6 +135,7 @@ function EditTransactionDialog({ trigger, transaction, userId, open: controlledO
 
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['overview'] }),
+        queryClient.invalidateQueries({ queryKey: ['overview', 'history'] }),
         queryClient.invalidateQueries({ queryKey: ['transactions'] }),
         queryClient.invalidateQueries({ queryKey: ['wallet-balance'] }),
         queryClient.invalidateQueries({ queryKey: ['dashboard-summary'] }),
@@ -157,7 +158,7 @@ function EditTransactionDialog({ trigger, transaction, userId, open: controlledO
       toast.loading('Updating transaction...', { id: `edit-transaction-${transaction.id}` })
       mutate({
         ...values,
-        date: DateToUTCDate(values.date),
+        date: DateToUTCDateOnly(values.date),
       })
     },
     [mutate, transaction.id]

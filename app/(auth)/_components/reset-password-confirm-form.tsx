@@ -59,7 +59,7 @@ export function ResetPasswordConfirmForm() {
         await setActive({
           session: attemptFirstFactor.createdSessionId,
         })
-        router.push(`${window.location.origin}/`)
+        router.push('/')
         toast.success('Password reset successfully.')
       } else {
         console.error(attemptFirstFactor)
@@ -124,8 +124,13 @@ export function ResetPasswordConfirmForm() {
           )}
         />
         <div className='mt-2 flex flex-col-reverse gap-2 sm:flex-row'>
-          <Button type='button' variant='outline' className='w-full' onClick={() => router.back()}>
-            Go back
+          <Button
+            type='button'
+            variant='outline'
+            className='w-full'
+            onClick={() => router.push('/signin/reset-password')}
+          >
+            Start over
           </Button>
           <Button className='w-full' disabled={loading}>
             {loading && <Icons.spinner className='mr-2 size-4 animate-spin' aria-hidden='true' />}
@@ -133,6 +138,10 @@ export function ResetPasswordConfirmForm() {
             <span className='sr-only'>Reset password</span>
           </Button>
         </div>
+        <p className='text-sm text-muted-foreground'>
+          If this page was refreshed or the reset session expired, start over and request a new
+          code.
+        </p>
       </form>
     </Form>
   )

@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Shell } from '@/components/app-ui/shell'
-import { OAuthSignIn } from '@/app/(auth)/_components/oauth-signin'
+import { OAuthSignUp } from '@/app/(auth)/_components/oauth-signup'
 import { SignUpForm } from '@/app/(auth)/_components/signup-form'
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default function SignUpPage() {
           <CardDescription>Choose your preferred sign up method</CardDescription>
         </CardHeader>
         <CardContent className='grid gap-4'>
-          <OAuthSignIn />
+          <OAuthSignUp />
           <div className='relative'>
             <div className='absolute inset-0 flex items-center'>
               <span className='w-full border-t' />

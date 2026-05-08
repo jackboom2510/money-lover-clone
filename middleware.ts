@@ -17,7 +17,12 @@ export default clerkMiddleware((auth, req) => {
   }
 
   // Protect all other routes
-  auth().protect({
-    unauthenticatedUrl: '/signin',
-  })
+  auth().protect()
 })
+
+export const config = {
+  matcher: [
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpg|jpeg|png|gif|svg|webp|ttf|woff|woff2|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    '/(api|trpc)(.*)',
+  ],
+}

@@ -40,6 +40,10 @@ export function DateToUTCDate(date: Date) {
   )
 }
 
+export function DateToUTCDateOnly(date: Date) {
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+}
+
 export function GetFormatterForCurrency(currency: string) {
   const locale = Currencies.find((c) => c.value === currency)?.locale
 

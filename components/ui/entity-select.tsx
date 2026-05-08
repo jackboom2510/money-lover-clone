@@ -9,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { getBudgetOptions, getGoalOptions, getLoanOptions, BudgetOption, GoalOption, LoanOption } from '@/lib/services/entity.service'
+import { getCreateUserSetting } from '@/lib/actions/user-setting'
+import { GetFormatterForCurrency } from '@/lib/utils'
 
 interface BudgetSelectProps {
   value?: string
@@ -26,11 +27,19 @@ export function BudgetSelect({ value, onValueChange, placeholder }: BudgetSelect
     enabled: !!user?.id,
   })
 
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', user?.id],
+    queryFn: () => getCreateUserSetting(user!.id),
+    enabled: !!user?.id,
+  })
+
+  const formatter = GetFormatterForCurrency(userSettings?.currency || 'USD')
+
   if (isLoading) {
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="Loading budgets..." />
+          <SelectValue placeholder='Loading budgets...' />
         </SelectTrigger>
       </Select>
     )
@@ -40,7 +49,7 @@ export function BudgetSelect({ value, onValueChange, placeholder }: BudgetSelect
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="No budgets available" />
+          <SelectValue placeholder='No budgets available' />
         </SelectTrigger>
       </Select>
     )
@@ -49,12 +58,12 @@ export function BudgetSelect({ value, onValueChange, placeholder }: BudgetSelect
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder || "Link to budget..."} />
+        <SelectValue placeholder={placeholder || 'Link to budget...'} />
       </SelectTrigger>
       <SelectContent>
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
-            {option.name} (${option.spent?.toFixed(2) || 0}/${option.amount?.toFixed(2) || 0})
+            {option.name} ({formatter.format(option.spent || 0)}/{formatter.format(option.amount || 0)})
           </SelectItem>
         ))}
       </SelectContent>
@@ -77,11 +86,19 @@ export function GoalSelect({ value, onValueChange, placeholder }: GoalSelectProp
     enabled: !!user?.id,
   })
 
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', user?.id],
+    queryFn: () => getCreateUserSetting(user!.id),
+    enabled: !!user?.id,
+  })
+
+  const formatter = GetFormatterForCurrency(userSettings?.currency || 'USD')
+
   if (isLoading) {
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="Loading goals..." />
+          <SelectValue placeholder='Loading goals...' />
         </SelectTrigger>
       </Select>
     )
@@ -91,7 +108,7 @@ export function GoalSelect({ value, onValueChange, placeholder }: GoalSelectProp
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="No goals available" />
+          <SelectValue placeholder='No goals available' />
         </SelectTrigger>
       </Select>
     )
@@ -100,12 +117,13 @@ export function GoalSelect({ value, onValueChange, placeholder }: GoalSelectProp
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder || "Link to goal..."} />
+        <SelectValue placeholder={placeholder || 'Link to goal...'} />
       </SelectTrigger>
       <SelectContent>
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
-            {option.name} (${option.contributed?.toFixed(2) || 0}/${option.targetAmount?.toFixed(2) || 0})
+            {option.name} ({formatter.format(option.contributed || 0)}/
+            {formatter.format(option.targetAmount || 0)})
             {option.isCompleted && ' ✓'}
           </SelectItem>
         ))}
@@ -129,11 +147,19 @@ export function LoanSelect({ value, onValueChange, placeholder }: LoanSelectProp
     enabled: !!user?.id,
   })
 
+  const { data: userSettings } = useQuery({
+    queryKey: ['userSettings', user?.id],
+    queryFn: () => getCreateUserSetting(user!.id),
+    enabled: !!user?.id,
+  })
+
+  const formatter = GetFormatterForCurrency(userSettings?.currency || 'USD')
+
   if (isLoading) {
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="Loading loans..." />
+          <SelectValue placeholder='Loading loans...' />
         </SelectTrigger>
       </Select>
     )
@@ -143,7 +169,7 @@ export function LoanSelect({ value, onValueChange, placeholder }: LoanSelectProp
     return (
       <Select disabled>
         <SelectTrigger>
-          <SelectValue placeholder="No loans available" />
+          <SelectValue placeholder='No loans available' />
         </SelectTrigger>
       </Select>
     )
@@ -152,12 +178,13 @@ export function LoanSelect({ value, onValueChange, placeholder }: LoanSelectProp
   return (
     <Select value={value} onValueChange={onValueChange}>
       <SelectTrigger>
-        <SelectValue placeholder={placeholder || "Link to loan..."} />
+        <SelectValue placeholder={placeholder || 'Link to loan...'} />
       </SelectTrigger>
       <SelectContent>
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
-            {option.name} ({option.loanType}) - ${option.paidAmount?.toFixed(2) || 0}/${option.totalAmount?.toFixed(2) || 0}
+            {option.name} ({option.loanType}) - {formatter.format(option.paidAmount || 0)}/
+            {formatter.format(option.totalAmount || 0)}
             {option.status && ` (${option.status})`}
           </SelectItem>
         ))}
