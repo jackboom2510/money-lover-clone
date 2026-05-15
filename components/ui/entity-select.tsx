@@ -16,9 +16,10 @@ interface BudgetSelectProps {
   value?: string
   onValueChange?: (value: string) => void
   placeholder?: string
+  allowClear?: boolean
 }
 
-export function BudgetSelect({ value, onValueChange, placeholder }: BudgetSelectProps) {
+export function BudgetSelect({ value, onValueChange, placeholder, allowClear = false }: BudgetSelectProps) {
   const { user } = useUser()
 
   const { data: options, isLoading } = useQuery({
@@ -56,11 +57,12 @@ export function BudgetSelect({ value, onValueChange, placeholder }: BudgetSelect
   }
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || undefined} onValueChange={onValueChange}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder || 'Link to budget...'} />
       </SelectTrigger>
       <SelectContent>
+        {allowClear ? <SelectItem value='__none__'>No budget link</SelectItem> : null}
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
             {option.name} ({formatter.format(option.spent || 0)}/{formatter.format(option.amount || 0)})
@@ -75,9 +77,10 @@ interface GoalSelectProps {
   value?: string
   onValueChange?: (value: string) => void
   placeholder?: string
+  allowClear?: boolean
 }
 
-export function GoalSelect({ value, onValueChange, placeholder }: GoalSelectProps) {
+export function GoalSelect({ value, onValueChange, placeholder, allowClear = false }: GoalSelectProps) {
   const { user } = useUser()
 
   const { data: options, isLoading } = useQuery({
@@ -115,11 +118,12 @@ export function GoalSelect({ value, onValueChange, placeholder }: GoalSelectProp
   }
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || undefined} onValueChange={onValueChange}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder || 'Link to goal...'} />
       </SelectTrigger>
       <SelectContent>
+        {allowClear ? <SelectItem value='__none__'>No goal link</SelectItem> : null}
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
             {option.name} ({formatter.format(option.contributed || 0)}/
@@ -136,9 +140,10 @@ interface LoanSelectProps {
   value?: string
   onValueChange?: (value: string) => void
   placeholder?: string
+  allowClear?: boolean
 }
 
-export function LoanSelect({ value, onValueChange, placeholder }: LoanSelectProps) {
+export function LoanSelect({ value, onValueChange, placeholder, allowClear = false }: LoanSelectProps) {
   const { user } = useUser()
 
   const { data: options, isLoading } = useQuery({
@@ -176,11 +181,12 @@ export function LoanSelect({ value, onValueChange, placeholder }: LoanSelectProp
   }
 
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select value={value || undefined} onValueChange={onValueChange}>
       <SelectTrigger>
         <SelectValue placeholder={placeholder || 'Link to loan...'} />
       </SelectTrigger>
       <SelectContent>
+        {allowClear ? <SelectItem value='__none__'>No loan link</SelectItem> : null}
         {options.map((option: any) => (
           <SelectItem key={option.id} value={option.id}>
             {option.name} ({option.loanType}) - {formatter.format(option.paidAmount || 0)}/

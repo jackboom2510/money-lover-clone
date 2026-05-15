@@ -165,6 +165,19 @@ function EditTransactionDialog({ trigger, transaction, userId, open: controlledO
   )
 
   const transactionType = form.watch('type')
+  const selectedBudgetId = form.watch('budgetId')
+  const selectedLoanId = form.watch('loanId')
+
+  useEffect(() => {
+    if (transactionType === 'income') {
+      form.setValue('budgetId', undefined, { shouldValidate: true })
+      form.setValue('loanId', undefined, { shouldValidate: true })
+    }
+
+    if (transactionType === 'expense') {
+      form.setValue('goalId', undefined, { shouldValidate: true })
+    }
+  }, [form, transactionType])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -321,25 +334,11 @@ function EditTransactionDialog({ trigger, transaction, userId, open: controlledO
 
             <div className='space-y-4 border-t pt-4'>
               <h3 className='text-sm font-medium text-muted-foreground'>Link to Financial Entities (Optional)</h3>
+              <p className='text-xs text-muted-foreground'>
+                Income transactions can only link to goals. Expense transactions can link to either a budget or a loan.
+              </p>
 
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                <FormField
-                  control={form.control}
-                  name='budgetId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link to Budget</FormLabel>
-                      <FormControl>
-                        <BudgetSelect
-                          value={field.value || ''}
-                          onValueChange={field.onChange}
-                          placeholder='Select a budget...'
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-
+              {transactionType === 'income' ? (
                 <FormField
                   control={form.control}
                   name='goalId'
@@ -349,31 +348,73 @@ function EditTransactionDialog({ trigger, transaction, userId, open: controlledO
                       <FormControl>
                         <GoalSelect
                           value={field.value || ''}
-                          onValueChange={field.onChange}
+                          onValueChange={(value) => field.onChange(value === '__none__' ? undefined : value)}
                           placeholder='Select a goal...'
+                          allowClear
                         />
                       </FormControl>
+                      <FormDescription>Use income transactions to contribute toward a financial goal</FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              ) : (
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  <FormField
+                    control={form.control}
+                    name='budgetId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link to Budget</FormLabel>
+                        <FormControl>
+                          <BudgetSelect
+                            value={field.value || ''}
+                            onValueChange={(value) => {
+                              const nextValue = value === '__none__' ? undefined : value
+                              field.onChange(nextValue)
+                              form.setValue('loanId', undefined, { shouldValidate: true })
+                            }}
+                            placeholder='Select a budget...'
+                            allowClear
+                          />
+                        </FormControl>
+                        <FormDescription>Use this for regular expense tracking against a budget</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name='loanId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link to Loan</FormLabel>
-                      <FormControl>
-                        <LoanSelect
-                          value={field.value || ''}
-                          onValueChange={field.onChange}
-                          placeholder='Select a loan...'
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name='loanId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link to Loan</FormLabel>
+                        <FormControl>
+                          <LoanSelect
+                            value={field.value || ''}
+                            onValueChange={(value) => {
+                              const nextValue = value === '__none__' ? undefined : value
+                              field.onChange(nextValue)
+                              form.setValue('budgetId', undefined, { shouldValidate: true })
+                            }}
+                            placeholder='Select a loan...'
+                            allowClear
+                          />
+                        </FormControl>
+                        <FormDescription>Use this for repayment transactions instead of budget tracking</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {transactionType === 'expense' && (selectedBudgetId || selectedLoanId) ? (
+                <p className='text-xs text-muted-foreground'>
+                  Selecting one expense link clears the other to keep the transaction semantically consistent.
+                </p>
+              ) : null}
             </div>
           </form>
         </Form>

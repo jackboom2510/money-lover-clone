@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { DateToUTCDateOnly, cn } from '@/lib/utils'
-import { ReactNode, useCallback, useState } from 'react'
+import { ReactNode, useCallback, useEffect, useState } from 'react'
 
 import React from 'react'
 import { useForm } from 'react-hook-form'
@@ -51,6 +51,9 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
     defaultValues: {
       type,
       date: new Date(),
+      budgetId: undefined,
+      goalId: undefined,
+      loanId: undefined,
     },
   })
   const [open, setOpen] = useState(false)
@@ -69,6 +72,20 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
   )
 
   const queryClient = useQueryClient()
+  const transactionType = form.watch('type')
+  const selectedBudgetId = form.watch('budgetId')
+  const selectedLoanId = form.watch('loanId')
+
+  useEffect(() => {
+    if (transactionType === 'income') {
+      form.setValue('budgetId', undefined, { shouldValidate: true })
+      form.setValue('loanId', undefined, { shouldValidate: true })
+    }
+
+    if (transactionType === 'expense') {
+      form.setValue('goalId', undefined, { shouldValidate: true })
+    }
+  }, [form, transactionType])
 
   const { mutate, isPending } = useMutation({
     mutationFn: (values: CreateTransactionSchemaType) => createTransaction(userId, values),
@@ -83,6 +100,10 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
         amount: 0,
         date: new Date(),
         category: undefined,
+        walletId: undefined,
+        budgetId: undefined,
+        goalId: undefined,
+        loanId: undefined,
       })
 
       // After creating a transaction, we need to invalidate the overview query which will refetch data in the homepage
@@ -245,26 +266,11 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
             {/* Entity Linking Fields */}
             <div className="space-y-4 border-t pt-4">
               <h3 className="text-sm font-medium text-muted-foreground">Link to Financial Entities (Optional)</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name='budgetId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link to Budget</FormLabel>
-                      <FormControl>
-                        <BudgetSelect 
-                          value={field.value || ''} 
-                          onValueChange={field.onChange}
-                          placeholder="Select a budget..."
-                        />
-                      </FormControl>
-                      <FormDescription>Link this transaction to a budget (optional)</FormDescription>
-                    </FormItem>
-                  )}
-                />
+              <p className="text-xs text-muted-foreground">
+                Income transactions can only link to goals. Expense transactions can link to either a budget or a loan.
+              </p>
 
+              {transactionType === 'income' ? (
                 <FormField
                   control={form.control}
                   name='goalId'
@@ -272,35 +278,75 @@ function CreateTransactionDialog({ trigger, type, userId }: Props) {
                     <FormItem>
                       <FormLabel>Link to Goal</FormLabel>
                       <FormControl>
-                        <GoalSelect 
-                          value={field.value || ''} 
-                          onValueChange={field.onChange}
+                        <GoalSelect
+                          value={field.value || ''}
+                          onValueChange={(value) => field.onChange(value === '__none__' ? undefined : value)}
                           placeholder="Select a goal..."
+                          allowClear
                         />
                       </FormControl>
-                      <FormDescription>Link this transaction to a goal (optional)</FormDescription>
+                      <FormDescription>Use income transactions to contribute toward a financial goal</FormDescription>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
+              ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name='budgetId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link to Budget</FormLabel>
+                        <FormControl>
+                          <BudgetSelect
+                            value={field.value || ''}
+                            onValueChange={(value) => {
+                              const nextValue = value === '__none__' ? undefined : value
+                              field.onChange(nextValue)
+                              form.setValue('loanId', undefined, { shouldValidate: true })
+                            }}
+                            placeholder="Select a budget..."
+                            allowClear
+                          />
+                        </FormControl>
+                        <FormDescription>Use this for regular expense tracking against a budget</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name='loanId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Link to Loan</FormLabel>
-                      <FormControl>
-                        <LoanSelect 
-                          value={field.value || ''} 
-                          onValueChange={field.onChange}
-                          placeholder="Select a loan..."
-                        />
-                      </FormControl>
-                      <FormDescription>Link this transaction to a loan (optional)</FormDescription>
-                    </FormItem>
-                  )}
-                />
-              </div>
+                  <FormField
+                    control={form.control}
+                    name='loanId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Link to Loan</FormLabel>
+                        <FormControl>
+                          <LoanSelect
+                            value={field.value || ''}
+                            onValueChange={(value) => {
+                              const nextValue = value === '__none__' ? undefined : value
+                              field.onChange(nextValue)
+                              form.setValue('budgetId', undefined, { shouldValidate: true })
+                            }}
+                            placeholder="Select a loan..."
+                            allowClear
+                          />
+                        </FormControl>
+                        <FormDescription>Use this for repayment transactions instead of budget tracking</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {transactionType === 'expense' && (selectedBudgetId || selectedLoanId) ? (
+                <p className="text-xs text-muted-foreground">
+                  Selecting one expense link clears the other to keep the transaction semantically consistent.
+                </p>
+              ) : null}
             </div>
           </form>
         </Form>

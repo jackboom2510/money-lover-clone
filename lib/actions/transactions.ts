@@ -14,6 +14,57 @@ import { GetFormatterForCurrency } from '../utils'
 import { currentUser } from '@clerk/nextjs/server'
 import { redirect } from 'next/navigation'
 
+async function validateLinkedEntitiesOwnership(
+  userId: string,
+  linkedIds: {
+    budgetId?: string
+    goalId?: string
+    loanId?: string
+  }
+) {
+  const [budget, goal, loan] = await Promise.all([
+    linkedIds.budgetId
+      ? db.budget.findFirst({
+          where: {
+            id: linkedIds.budgetId,
+            userId,
+          },
+          select: { id: true },
+        })
+      : null,
+    linkedIds.goalId
+      ? db.goal.findFirst({
+          where: {
+            id: linkedIds.goalId,
+            userId,
+          },
+          select: { id: true },
+        })
+      : null,
+    linkedIds.loanId
+      ? db.loan.findFirst({
+          where: {
+            id: linkedIds.loanId,
+            userId,
+          },
+          select: { id: true },
+        })
+      : null,
+  ])
+
+  if (linkedIds.budgetId && !budget) {
+    throw new Error('Budget not found')
+  }
+
+  if (linkedIds.goalId && !goal) {
+    throw new Error('Goal not found')
+  }
+
+  if (linkedIds.loanId && !loan) {
+    throw new Error('Loan not found')
+  }
+}
+
 async function syncLinkedEntities(
   userId: string,
   linkedIds: {
@@ -46,6 +97,8 @@ export async function createTransaction(userId: string, form: CreateTransactionS
   }
 
   const { amount, category, date, description, type, walletId, budgetId, goalId, loanId } = parsedBody.data
+
+  await validateLinkedEntitiesOwnership(userId, { budgetId, goalId, loanId })
 
   // Validate wallet exists and belongs to user
   const wallet = await db.wallet.findUnique({
@@ -338,6 +391,8 @@ export async function updateTransaction(userId: string, form: UpdateTransactionS
 
   const { id, amount, category, date, description, type, walletId, budgetId, goalId, loanId } =
     parsedBody.data
+
+  await validateLinkedEntitiesOwnership(userId, { budgetId, goalId, loanId })
 
   const existingTransaction = await db.transaction.findUnique({
     where: {

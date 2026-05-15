@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTransactionsHistory, updateTransaction } from '@/lib/actions/transactions';
+import { createTransaction, getTransactionsHistory, updateTransaction } from '@/lib/actions/transactions';
 import { auth } from '@clerk/nextjs/server';
 
 export const dynamic = 'force-dynamic';
@@ -41,8 +41,7 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await req.json();
-    // Here you would handle transaction creation
-    // For now, return a success response
+    await createTransaction(userId, data);
     return NextResponse.json({ message: 'Transaction created successfully' });
   } catch (error) {
     console.error('Error creating transaction:', error);
